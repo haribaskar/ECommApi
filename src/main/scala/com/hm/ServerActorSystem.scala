@@ -11,6 +11,6 @@ import scala.concurrent.ExecutionContext
   */
 object ServerActorSystem {
   implicit val system:ActorSystem = ActorSystem()
-  implicit val ec:ExecutionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(2))
+  implicit val ec:ExecutionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4))
 
 }

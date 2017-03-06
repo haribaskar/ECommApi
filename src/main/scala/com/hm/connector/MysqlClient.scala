@@ -1,12 +1,13 @@
 package com.hm.connector
 
-import java.sql.{Connection, DriverManager, PreparedStatement, ResultSet}
+import java.sql.{Connection, DriverManager, PreparedStatement, ResultSet, Timestamp}
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 
 import akka.actor.ActorSystem
+import com.hm.Counter
 
 import scala.collection.mutable.ArrayBuffer
-import scala.language.postfixOps
+
 
 /**
   * Created by hari on 27/2/17.
@@ -16,6 +17,8 @@ object MysqlClient {
   private val dbc = "jdbc:mysql://" + "127.0.0.1" + ":" + 3306 + "/" + "classicmodels" + "?user=" + "root" + "&password=" + "root"
   classOf[com.mysql.jdbc.Driver]
   private var conn: Connection = null
+
+
 
   def getConnection: Connection = {
     if(conn ==null) {
@@ -38,7 +41,8 @@ object MysqlClient {
   )
 
   val statement=MysqlClient.getConnection.prepareStatement("insert into apiusage(userid,datetime,memory,computetime,path) values (?,?,?,?,?)")
-
+  val updatecountstatement=MysqlClient.getConnection.prepareStatement("insert into apiusage(userid,datetime,memory,computetime,path,count,usageid) values (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE count = count + ?")
+  val selectcountstatement=MysqlClient.getConnection.prepareStatement("select count(productcode) as productcount from products where productline=?")
   def closeConnection() = conn.close()
 
   def executeQuery(query: String): Boolean = {
@@ -101,14 +105,45 @@ object MysqlClient {
   }
 
 
+  def updateCount(userid:Int,memory:String,computetime:String,path:String,cookie:String):Boolean={
+    MysqlClient.updatecountstatement.setInt(1,userid)
+    MysqlClient.updatecountstatement.setTimestamp(2,new Timestamp(System.currentTimeMillis()))
+
+    MysqlClient.updatecountstatement.setString(3,memory)
+    MysqlClient.updatecountstatement.setString(4,computetime)
+    MysqlClient.updatecountstatement.setString(5,path)
+    MysqlClient.updatecountstatement.setInt(6,Counter.counterMap.get(cookie)._1)
+    MysqlClient.updatecountstatement.setInt(7,1)
+    print("Counter"+Counter.counterMap.get(""))
+    MysqlClient.updatecountstatement.setInt(8,Counter.counterMap.get(cookie)._1)
+    // MysqlClient.executeQuery("insert into apiusage(userid,datetime,memory,computetime,path,count,usageid) values ("+userid+",NOW(),"+memory+","+computetime+","+path+","+1+","+1+") ON DUPLICATE KEY UPDATE count = count +"+c+"")
+    true
+  }
 
 
   import system.dispatcher
   import scala.concurrent.duration._
   // ...now with system in current scope:
   val system=ActorSystem("on-spray-can")
-  system.scheduler.schedule(10 seconds, 10 seconds) {
-    MysqlClient.statement.executeBatch()
+  system.scheduler.schedule(1 seconds, 5 seconds) {
+    //MysqlClient.statement.executeBatch()
+
+//    println("Batch Update "+Counter.c)
+
+
+    import collection.JavaConversions._
+
+    Counter.counterMap.toMap.foreach(i=>{
+      println("User : "+ i._1+" Count : "+i._2)
+      if(i._2._1!=0)
+      MysqlClient.updatecountstatement.execute()
+
+      Counter.counterMap.put(i._1,(0,0))
+    })
+
+//    if(Counter.c!=0)
+//      MysqlClient.executeQuery("insert into apiusage(userid,datetime,memory,computetime,path,count,usageid) values ("+userid+",NOW(),"+memory+","+computetime+","+path+","+1+","+1+") ON DUPLICATE KEY UPDATE count = count +"+c+"")
+//    Counter.c=0
     MysqlClient.getConnection.commit()
   }
 

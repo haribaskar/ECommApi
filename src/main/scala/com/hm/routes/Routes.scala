@@ -2,7 +2,7 @@ package com.hm.routes
 import java.sql.Timestamp
 import java.util.Calendar
 
-import com.hm.connector
+import com.hm.{Counter, connector}
 import spray.json.{JsArray, JsNumber, JsString, _}
 import com.hm.connector.MysqlClient
 import spray.http.{AllOrigins, DateTime}
@@ -31,6 +31,8 @@ trait Routes extends HttpService with AuthenticationHandler{
             val userId = nameCookie.content.toInt
         entity(as[String]) {
           body => {
+
+
             val json = body.parseJson.asJsObject
             val id = json.getFields("id").head.asInstanceOf[JsString].value
             val startTime = System.currentTimeMillis();
@@ -46,12 +48,16 @@ trait Routes extends HttpService with AuthenticationHandler{
 
             val stopTime = System.currentTimeMillis();
             val elapsedTime = stopTime - startTime;
-            insertUsageData(userId,memory.toString,elapsedTime.toString,"productcountbycustomer")
+            //insertUsageData(userId,memory.toString,elapsedTime.toString,"productcountbycustomer")
+            Counter.updateCounter(nameCookie.content)
+
+            MysqlClient.updateCount(userId,memory.toString,elapsedTime.toString,"productcountbycustomer",nameCookie.content)
             complete("Elapsed Time" + elapsedTime + "   count" + count + "  memory" + memory)
           }
         }
           }
-          case None => complete("No user logged in")
+          case None => {println("NO Cookie ")
+            complete("No user logged in")}
         }
       }~path("productcountbyproductline") {
         optionalCookie("userName") {
@@ -95,7 +101,9 @@ trait Routes extends HttpService with AuthenticationHandler{
 
   def getProductCountByProductLine(productLine:String):Int={
     var count=0
-    val rs=MysqlClient.getResultSet("select count(productcode) as productcount from products where productline='"+productLine+"'")
+
+    MysqlClient.selectcountstatement.setString(1,productLine)
+    val rs= MysqlClient.selectcountstatement.executeQuery()
     while(rs.next())
     {
       count=rs.getInt("productcount")
@@ -113,10 +121,12 @@ trait Routes extends HttpService with AuthenticationHandler{
     MysqlClient.statement.setString(3,memory)
     MysqlClient.statement.setString(4,computetime)
     MysqlClient.statement.setString(5,path)
+
     MysqlClient.statement.addBatch()
 
 
     true
   }
+
 
 }
