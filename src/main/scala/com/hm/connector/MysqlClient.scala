@@ -105,16 +105,16 @@ object MysqlClient {
   }
 
 
-  def updateCount(userid:Int,memory:String,computetime:String,path:String,cookie:String):Boolean={
+  def updateCount(userid:Int,memory:String,computetime:String,path:String,cookie:String,timestamp: Timestamp):Boolean={
     MysqlClient.updatecountstatement.setInt(1,userid)
-    MysqlClient.updatecountstatement.setTimestamp(2,new Timestamp(System.currentTimeMillis()))
+    MysqlClient.updatecountstatement.setTimestamp(2,timestamp)
 
     MysqlClient.updatecountstatement.setString(3,memory)
     MysqlClient.updatecountstatement.setString(4,computetime)
     MysqlClient.updatecountstatement.setString(5,path)
     MysqlClient.updatecountstatement.setInt(6,Counter.counterMap.get(cookie)._1)
     MysqlClient.updatecountstatement.setInt(7,1)
-    print("Counter"+Counter.counterMap.get(""))
+    print("Counter"+Counter.counterMap.get(cookie)._1)
     MysqlClient.updatecountstatement.setInt(8,Counter.counterMap.get(cookie)._1)
     // MysqlClient.executeQuery("insert into apiusage(userid,datetime,memory,computetime,path,count,usageid) values ("+userid+",NOW(),"+memory+","+computetime+","+path+","+1+","+1+") ON DUPLICATE KEY UPDATE count = count +"+c+"")
     true

@@ -1,5 +1,6 @@
 package com.hm
 
+import java.text.SimpleDateFormat
 import java.util
 
 /**
@@ -9,15 +10,21 @@ object Counter {
 
 
   val counterMap=new util.HashMap[String,(Integer,Integer)]()
-  val time=(System.currentTimeMillis()*1000)%10
+  val df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
   def updateCounter(key:String) = {
 //    println("Incrementing for "+key)
-    if(counterMap.containsKey(key)&&time!=0)
+    if(counterMap.containsKey(key))
       {
-        println("Time"+time)
-      counterMap.put(key,(counterMap.get(key)._1+1,counterMap.get(key)._2+time.toInt))}
+
+      counterMap.put(key,(counterMap.get(key)._1+1,counterMap.get(key)._2))}
     else
-      counterMap.put(key,(1,time.toInt))
+      counterMap.put(key,(1,1))
+  }
+  def getTimeStamp(t:Long):Long={
+
+    val time=t-(t%(10*60*1000))
+    time
+
   }
 
 

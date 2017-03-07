@@ -1,6 +1,6 @@
 package com.hm.routes
 import java.sql.Timestamp
-import java.util.Calendar
+import java.util.{Calendar, Date}
 
 import com.hm.{Counter, connector}
 import spray.json.{JsArray, JsNumber, JsString, _}
@@ -36,6 +36,8 @@ trait Routes extends HttpService with AuthenticationHandler{
             val json = body.parseJson.asJsObject
             val id = json.getFields("id").head.asInstanceOf[JsString].value
             val startTime = System.currentTimeMillis();
+              val timeStamp= Counter.df.format(new Date(Counter.getTimeStamp(startTime)))
+            println("timestamp"+timeStamp)
             var x = Runtime.getRuntime().totalMemory()
 
             //          System.currentTimeMillis()
@@ -51,7 +53,7 @@ trait Routes extends HttpService with AuthenticationHandler{
             //insertUsageData(userId,memory.toString,elapsedTime.toString,"productcountbycustomer")
             Counter.updateCounter(nameCookie.content)
 
-            MysqlClient.updateCount(userId,memory.toString,elapsedTime.toString,"productcountbycustomer",nameCookie.content)
+            MysqlClient.updateCount(userId,memory.toString,elapsedTime.toString,"productcountbycustomer",nameCookie.content,Timestamp.valueOf(timeStamp))
             complete("Elapsed Time" + elapsedTime + "   count" + count + "  memory" + memory)
           }
         }
