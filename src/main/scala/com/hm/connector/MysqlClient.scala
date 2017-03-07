@@ -1,6 +1,7 @@
 package com.hm.connector
 
 import java.sql.{Connection, DriverManager, PreparedStatement, ResultSet, Timestamp}
+import java.util.Date
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 
 import akka.actor.ActorSystem
@@ -41,7 +42,7 @@ object MysqlClient {
   )
 
   val statement=MysqlClient.getConnection.prepareStatement("insert into apiusage(userid,datetime,memory,computetime,path) values (?,?,?,?,?)")
-  val updatecountstatement=MysqlClient.getConnection.prepareStatement("insert into apiusage(userid,datetime,memory,computetime,path,count,usageid) values (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE count = count + ?")
+  val updatecountstatement=MysqlClient.getConnection.prepareStatement("insert into apiusage(userid,datetime,memory,computetime,path,count,usageid) values (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE count = count + ?,userid=?")
   val selectcountstatement=MysqlClient.getConnection.prepareStatement("select count(productcode) as productcount from products where productline=?")
   def closeConnection() = conn.close()
 
@@ -107,7 +108,7 @@ object MysqlClient {
 
   def updateCount(userid:Int,memory:String,computetime:String,path:String,cookie:String,timestamp: Timestamp):Boolean={
     MysqlClient.updatecountstatement.setInt(1,userid)
-    MysqlClient.updatecountstatement.setTimestamp(2,timestamp)
+    MysqlClient.updatecountstatement.setTimestamp(2,Timestamp.valueOf(Counter.df.format(new Date(Counter.counterMap.get(cookie)._2))))
 
     MysqlClient.updatecountstatement.setString(3,memory)
     MysqlClient.updatecountstatement.setString(4,computetime)
@@ -116,6 +117,7 @@ object MysqlClient {
     MysqlClient.updatecountstatement.setInt(7,1)
     print("Counter"+Counter.counterMap.get(cookie)._1)
     MysqlClient.updatecountstatement.setInt(8,Counter.counterMap.get(cookie)._1)
+    MysqlClient.updatecountstatement.setInt(9,userid)
     // MysqlClient.executeQuery("insert into apiusage(userid,datetime,memory,computetime,path,count,usageid) values ("+userid+",NOW(),"+memory+","+computetime+","+path+","+1+","+1+") ON DUPLICATE KEY UPDATE count = count +"+c+"")
     true
   }

@@ -51,7 +51,7 @@ trait Routes extends HttpService with AuthenticationHandler{
             val stopTime = System.currentTimeMillis();
             val elapsedTime = stopTime - startTime;
             //insertUsageData(userId,memory.toString,elapsedTime.toString,"productcountbycustomer")
-            Counter.updateCounter(nameCookie.content)
+            Counter.updateCounter(nameCookie.content,Counter.getTimeStamp(startTime))
 
             MysqlClient.updateCount(userId,memory.toString,elapsedTime.toString,"productcountbycustomer",nameCookie.content,Timestamp.valueOf(timeStamp))
             complete("Elapsed Time" + elapsedTime + "   count" + count + "  memory" + memory)
